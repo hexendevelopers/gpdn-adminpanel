@@ -37,7 +37,6 @@ const EditBlogPage = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
 
-  // Update the fetchBlog function in useEffect to include new fields
   useEffect(() => {
     const fetchBlog = async () => {
       setIsLoading(true);
@@ -80,7 +79,6 @@ const EditBlogPage = () => {
     }
   };
 
-  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);

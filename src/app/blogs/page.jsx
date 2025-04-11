@@ -9,8 +9,8 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Default placeholder image path
-  const placeholderImage = '/placeholder-image.jpg';
+  // Update the placeholder image path
+  const placeholderImage = '/images/placeholder.jpg';  // or use an existing image path
 
   // Function to check if URL is from an external domain
   const isExternalUrl = (url) => {
@@ -24,10 +24,7 @@ const Page = () => {
       setError(null);
       
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:10000';
-        console.log(`Fetching blogs from: ${baseUrl}/blog/FetchNewsAndBlogs`);
-        
-        const response = await axios.get(`${baseUrl}/blog/FetchNewsAndBlogs`);
+        const response = await axios.get('/api/blog/FetchNewsAndBlogs');
         console.log("Raw response:", response.data);
         
         // Access the blog data based on the API's response structure
@@ -161,11 +158,9 @@ const Page = () => {
     fetchBlogs();
   }, []);
 
-  // Update the delete endpoint as well
   const handleDelete = async (blogId) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:10000';
-      await axios.post(`${baseUrl}/blog/DeleteNewsAndBlogs`, {
+      await axios.post('/api/blog/DeleteNewsAndBlogs', {
         BlogId: blogId
       });
       alert("Blog deleted successfully");
