@@ -24,7 +24,7 @@ const Page = () => {
       setError(null);
       
       try {
-        const response = await axios.get('/api/blog/FetchNewsAndBlogs');
+        const response = await axios.get('https://gpdn-global-palliative-doctors-network.onrender.com/api/blog/FetchNewsAndBlogs');
         console.log("Raw response:", response.data);
         
         // Access the blog data based on the API's response structure
@@ -160,7 +160,7 @@ const Page = () => {
 
   const handleDelete = async (blogId) => {
     try {
-      await axios.post('/api/blog/DeleteNewsAndBlogs', {
+      await axios.post('https://gpdn-global-palliative-doctors-network.onrender.com/api/blog/DeleteNewsAndBlogs', {
         BlogId: blogId
       });
       alert("Blog deleted successfully");
@@ -239,6 +239,19 @@ const Page = () => {
                   <h2 className="text-xl font-semibold text-black mt-2">
                     {data.title || "Untitled"}
                   </h2>
+                  {/* Add tags display */}
+                  {data.tags && data.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {data.tags.map((tag, tagIndex) => (
+                        <span
+                          key={tagIndex}
+                          className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <p className="font-normal text-sm text-tertiary w-full mt-1 mb-3">
                     {(data.description && data.description.length > 120)
                       ? data.description

@@ -4,84 +4,83 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import Image from "next/image";
 import axios from "axios";
+import { useRouter } from 'next/navigation';
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 const NewBlogPage = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [description, setDescription] = useState(""); 
-  const [category, setCategory] = useState(""); 
+  const [description, setDescription] = useState("");
   const [blogImage, setBlogImage] = useState(null);
+  const [category, setCategory] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [tags, setTags] = useState(""); // Add tags state
 
-  const handleImageChange = (e) => {
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBlogImage(reader.result); // Stores base64 string
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setBlogImage(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError("");
-    setSuccess("");
 
     try {
+      let imageURL = "";
+      
+      if (blogImage) {
+        imageURL = await convertToBase64(blogImage);
+      }
+
       const blogData = {
-        title: title.trim(),
-        content: content.trim(),
-        description: description.trim(),
-        category: category.trim(),
+        title,
+        content,
+        description,
+        category,
         authorId: "661055cb1d7f3d2a749e1a88",
-        imageURL: blogImage // This is the base64 string
+        imageURL,
+        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ""),
       };
 
-      // Make API call with JSON data
+      // Updated with correct API endpoint
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/blog/AddNewsAndBlogs`,
+        'https://gpdn-global-palliative-doctors-network.onrender.com/api/admin/AddNewsAndBlogs',
         blogData,
         {
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
         }
       );
 
       if (response.data.success) {
-        console.log("Blog submitted successfully:", response.data);
-        setSuccess("Blog published successfully!");
-        
-        // Reset form
-        setTitle("");
-        setContent("");
-        setDescription("");
-        setCategory("");
-        setBlogImage(null);
-        setImagePreview(null);
-      } else {
-        setError("Failed to save blog: " + response.data.message);
+        alert('Blog posted successfully!');
+        router.push('/blogs');
       }
     } catch (error) {
       console.error("Error submitting blog:", error);
-      setError(
-        `Failed to publish blog: ${
-          error.response?.data?.message || error.message || 'Server not responding'
-        }`
-      );
+      alert(`Failed to post blog: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
-  };
+};
 
   return (
     <section className="w-full h-full p-8 pr-28">
@@ -89,19 +88,6 @@ const NewBlogPage = () => {
         <h1 className="text-2xl font-bold mb-6 text-secondary">
           Write a New Blog
         </h1>
-        
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {success}
-          </div>
-        )}
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col gap-2">
             <input
@@ -112,39 +98,42 @@ const NewBlogPage = () => {
               className="w-full border border-gray-300 rounded px-4 py-2 text-3xl outline-none"
               required
             />
-            
+
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Blog Description"
-              className="w-full border border-gray-300 rounded px-4 py-2 text-lg outline-none"
+              className="w-full border border-gray-300 rounded px-4 py-2 outline-none"
               required
             />
 
-            <select
+            {/* Changed from dropdown to input box */}
+            <input
+              type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full border border-gray-300 rounded px-4 py-2 text-lg outline-none"
+              placeholder="Category"
+              className="w-full border border-gray-300 rounded px-4 py-2 outline-none"
               required
-            >
-              <option value="">Select Category</option>
-              <option value="Technology">Technology</option>
-              <option value="Health">Health</option>
-              <option value="Business">Business</option>
-              <option value="Lifestyle">Lifestyle</option>
-              <option value="Education">Education</option>
-              <option value="Other">Other</option>
-            </select>
-            
+            />
+
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="Add tags (comma-separated e.g., health, medicine, research)"
+              className="w-full border border-gray-300 rounded px-4 py-2 outline-none"
+            />
+
             <ReactQuill
               value={content}
               onChange={setContent}
-              className="bg-white border-none rounded-lg h-[50vh] pb-10"
+              className="bg-white border-none rounded-lg h-[50vh] pb-10"           
               placeholder="Write your blog content here..."
             />
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <label
               className="block text-sm font-semibold text-secondary"
@@ -160,27 +149,24 @@ const NewBlogPage = () => {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-white hover:file:bg-secondary-dark"
             />
             {imagePreview && (
-              <div className="w-full max-w-md h-64 mt-2">
+              <div className="w-[30vw] h-[30vh]">
                 <Image
                   src={imagePreview}
-                  width={400}
-                  height={300}
-                  alt="Blog preview"
-                  priority={true}
+                  width={100}
+                  height={100}
+                  alt="Selected blog"
                   className="h-full w-full rounded-md border object-cover"
                 />
               </div>
             )}
           </div>
-          
+
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`px-4 py-2 bg-primary text-white font-semibold rounded-lg ${
-              isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-            }`}
+            className="px-4 py-2 bg-primary text-white font-semibold rounded-lg disabled:opacity-50"
           >
-            {isSubmitting ? "Publishing..." : "Publish Blog"}
+            {isSubmitting ? 'Publishing...' : 'Publish Blog'}
           </button>
         </form>
       </div>
