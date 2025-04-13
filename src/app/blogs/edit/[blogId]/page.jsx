@@ -41,7 +41,8 @@ const EditBlogPage = () => {
     const fetchBlog = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/blog/FetchNewsAndBlogs`);
+        // Keep the fetch endpoint
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blog/FetchNewsAndBlogs`);
         
         const blog = response.data.data.find(blog => blog._id === blogId);
         
@@ -82,64 +83,75 @@ const EditBlogPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError("");
     
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       
-      // Define blogData before logging it
+      // Ensure all required fields are present
       const blogData = {
         _id: blogId,
         title: title.trim(),
         content: content.trim(),
         description: description.trim(),
         category: category.trim(),
-        tags: [],
-        imageURL: currentImageUrl // Initialize with current image URL
+        imageUrl: currentImageUrl,
+        // Remove empty tags array if not needed
+        // tags: [],
       };
-  
-      // Add new image if available
-      if (blogImage) {
-        const base64Image = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blogImage);
-        });
-        blogData.imageURL = base64Image;
-      }
 
-      // Log after blogData is defined
-      console.log('Submitting to:', `${baseUrl}/blog/EditNewsAndBlogs`);
-      console.log('Blog data:', blogData);
+      console.log('Sending request to:', `${baseUrl}/api/blog/EditNewsAndBlogs`);
+      console.log('Request Data:', JSON.stringify(blogData, null, 2));
 
-      const response = await axios.patch(  // Changed from post to patch
-        `${baseUrl}/blog/EditNewsAndBlogs`,
+      const response = await axios.patch(
+        `${baseUrl}/api/blog/EditNewsAndBlogs`,
         blogData,
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          validateStatus: function (status) {
+            return status >= 200 && status < 500; // Don't reject if status is 400
           },
           timeout: 10000
         }
       );
       
-      console.log('Response:', response.data);
-      
+      console.log('Full Response:', {
+        status: response.status,
+        data: response.data,
+        headers: response.headers
+      });
+
+      // Check the success flag in the response data
       if (response.data.success) {
         alert("Blog updated successfully!");
         router.push("/blogs");
       } else {
-        throw new Error(response.data.message || 'Failed to update blog');
+        // API returned success: false
+        throw new Error(
+          response.data.message || 
+          response.data.error || 
+          `Update failed: ${response.data.status || response.status}`
+        );
       }
       
     } catch (error) {
-      console.error("Error updating blog:", error);
+      console.error("Full error object:", error);
       console.error("Error details:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        config: error.config
+        statusText: error.response?.statusText
       });
-      setError(`Failed to update blog: ${error.response?.data?.message || error.message}`);
+      
+      setError(
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        error.message || 
+        'Failed to update the blog. Please check all fields and try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }

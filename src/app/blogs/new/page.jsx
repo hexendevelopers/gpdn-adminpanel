@@ -13,12 +13,11 @@ const NewBlogPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
   const [description, setDescription] = useState("");
   const [blogImage, setBlogImage] = useState(null);
   const [category, setCategory] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
-  const [tags, setTags] = useState(""); // Add tags state
+  const [tags, setTags] = useState("");
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -50,17 +49,17 @@ const NewBlogPage = () => {
 
       const blogData = {
         title,
-        content,
-        description,
+        content: description.replace(/<[^>]+>/g, ''),  // Remove HTML tags
+        description: description.replace(/<[^>]+>/g, ''),  // Remove HTML tags
         category,
         authorId: "661055cb1d7f3d2a749e1a88",
         imageURL,
         tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ""),
       };
 
-      // Updated with correct API endpoint
+      // Updated with environment variable
       const response = await axios.post(
-        'https://gpdn-global-palliative-doctors-network.onrender.com/api/admin/AddNewsAndBlogs',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/AddNewsAndBlogs`,
         blogData,
         {
           headers: {
@@ -80,7 +79,7 @@ const NewBlogPage = () => {
     } finally {
       setIsSubmitting(false);
     }
-};
+  };
 
   return (
     <section className="w-full h-full p-8 pr-28">
@@ -99,14 +98,32 @@ const NewBlogPage = () => {
               required
             />
 
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Blog Description"
-              className="w-full border border-gray-300 rounded px-4 py-2 outline-none"
-              required
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-secondary">
+                Blog Description
+              </label>
+              <ReactQuill
+                value={description}
+                onChange={setDescription}
+                className="bg-white border rounded h-[50vh] pb-10"           
+                placeholder="Write your blog description here..."
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, false] }],
+                    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                    [{'list': 'ordered'}, {'list': 'bullet'}],
+                    ['link', 'image'],
+                    ['clean']
+                  ],
+                }}
+                formats={[
+                  'header',
+                  'bold', 'italic', 'underline', 'strike', 'blockquote',
+                  'list', 'bullet',
+                  'link', 'image'
+                ]}
+              />
+            </div>
 
             {/* Changed from dropdown to input box */}
             <input
@@ -126,12 +143,7 @@ const NewBlogPage = () => {
               className="w-full border border-gray-300 rounded px-4 py-2 outline-none"
             />
 
-            <ReactQuill
-              value={content}
-              onChange={setContent}
-              className="bg-white border-none rounded-lg h-[50vh] pb-10"           
-              placeholder="Write your blog content here..."
-            />
+            {/* Remove the Blog Content section entirely */}
           </div>
 
           <div className="flex flex-col gap-2">

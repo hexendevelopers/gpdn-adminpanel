@@ -24,7 +24,7 @@ const Page = () => {
       setError(null);
       
       try {
-        const response = await axios.get('https://gpdn-global-palliative-doctors-network.onrender.com/api/blog/FetchNewsAndBlogs');
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/blog/FetchNewsAndBlogs`);
         console.log("Raw response:", response.data);
         
         // Access the blog data based on the API's response structure
@@ -160,7 +160,7 @@ const Page = () => {
 
   const handleDelete = async (blogId) => {
     try {
-      await axios.post('https://gpdn-global-palliative-doctors-network.onrender.com/api/blog/DeleteNewsAndBlogs', {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/blog/DeleteNewsAndBlogs`, {
         BlogId: blogId
       });
       alert("Blog deleted successfully");
